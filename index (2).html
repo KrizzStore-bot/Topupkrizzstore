@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TopUpKrizzStore - Top Up All Game</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',Arial,sans-serif; }
+  body { background:#0a0e27; color:#fff; padding-bottom:80px; }
+  
+  header {
+    background:linear-gradient(135deg,#1a1f4e,#0d1130);
+    padding:15px 20px; display:flex; justify-content:space-between; align-items:center;
+    position:sticky; top:0; z-index:100; box-shadow:0 2px 15px rgba(0,150,255,0.3);
+    border-bottom:1px solid #1e90ff33;
+  }
+  .logo { font-size:16px; font-weight:800; }
+  .logo span { color:#00d4ff; }
+  .header-right { display:flex; align-items:center; gap:10px; }
+  .saldo { background:#0d1130; padding:8px 12px; border-radius:20px; border:1px solid #00d4ff55; font-size:11px; }
+  .saldo b { color:#00ff88; }
+  .user-btn {
+    background:#0d1130; border:1px solid #00d4ff55; color:#00d4ff;
+    padding:8px 12px; border-radius:20px; font-size:11px; font-weight:700;
+    cursor:pointer;
+  }
+
+  .page { display:none; }
+  .page.active { display:block; }
+
+  .banner {
+    margin:15px; padding:22px; border-radius:15px;
+    background:linear-gradient(135deg,#0066ff,#00d4ff,#7b2fff);
+    background-size:200% 200%; animation:gradient 5s ease infinite;
+  }
+  @keyframes gradient { 0%,100%{background-position:0% 50%} 50%{background-position:100% 50%} }
+  .banner h2 { font-size:18px; margin-bottom:6px; }
+  .banner p { font-size:12px; opacity:0.9; }
+
+  .quick { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; padding:0 15px 15px; }
+  .quick-btn {
+    background:#12183a; border:1px solid #1e90ff33; border-radius:12px;
+    padding:14px 6px; text-align:center; cursor:pointer; transition:0.3s;
+  }
+  .quick-btn:hover { border-color:#00d4ff; transform:translateY(-3px); }
+  .quick-btn .icon { font-size:22px; margin-bottom:5px; }
+  .quick-btn .label { font-size:11px; font-weight:600; }
+
+  .search-wrap { padding:0 15px 12px; }
+  .search-box {
+    display:flex; align-items:center; background:#12183a;
+    border:1px solid #1e90ff33; border-radius:12px; padding:0 14px;
+    transition:0.3s;
+  }
+  .search-box:focus-within { border-color:#00d4ff; box-shadow:0 0 15px #00d4ff33; }
+  .search-box .icon { font-size:16px; color:#00d4ff; margin-right:8px; }
+  .search-box input {
+    flex:1; background:none; border:none; outline:none; color:#fff;
+    padding:13px 0; font-size:13px;
+  }
+  .search-box input::placeholder { color:#555; }
+  .clear-btn { background:none; border:none; color:#666; font-size:16px; cursor:pointer; padding:4px; }
+
+  .chips { display:flex; gap:6px; padding:0 15px 12px; overflow-x:auto; }
+  .chips::-webkit-scrollbar { display:none; }
+  .chip {
+    padding:6px 14px; border-radius:20px; background:#12183a; font-size:11px;
+    cursor:pointer; white-space:nowrap; border:1px solid #1e90ff22;
+    transition:0.3s; font-weight:600;
+  }
+  .chip.active { background:linear-gradient(135deg,#0066ff,#00d4ff); border-color:#00d4ff; }
+
+  .section-title {
+    padding:15px 15px 10px; font-size:15px; font-weight:700;
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .section-title small { font-size:11px; color:#00d4ff; font-weight:400; }
+
+  .game-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; padding:0 15px; }
+  .game-card {
+    background:#12183a; border-radius:12px; overflow:hidden; cursor:pointer;
+    border:1px solid #1e90ff22; transition:0.3s; text-align:center; position:relative;
+  }
+  .game-card:hover { border-color:#00d4ff; transform:translateY(-4px); box-shadow:0 8px 20px #00d4ff33; }
+  .game-logo {
+    height:80px; display:flex; align-items:center; justify-content:center;
+    background:#0d1130; overflow:hidden; font-size:36px;
+  }
+  .game-name { padding:8px 4px; font-size:11px; font-weight:600; }
+  .badge-hot {
+    position:absolute; top:6px; right:6px; background:#ff3b3b; color:#fff;
+    font-size:9px; padding:3px 7px; border-radius:10px; font-weight:700; z-index:2;
+  }
+  .no-result { grid-column:1/-1; text-align:center; padding:40px 20px; color:#666; font-size:13px; }
+
+  .tabs { display:flex; gap:6px; padding:10px 15px; overflow-x:auto; }
+  .tabs::-webkit-scrollbar { display:none; }
+  .tab {
+    padding:8px 14px; border-radius:20px; background:#12183a; font-size:12px;
+    cursor:pointer; white-space:nowrap; border:1px solid #1e90ff22; transition:0.3s;
+  }
+  .tab.active { background:linear-gradient(135deg,#0066ff,#00d4ff); border-color:#00d4ff; font-weight:700; }
+
+  .leaderboard { padding:0 15px 20px; }
+  .lb-item {
+    display:flex; align-items:center; gap:10px; padding:12px;
+    background:#12183a; border-radius:12px; margin-bottom:8px;
+    border:1px solid #1e90ff22; transition:0.3s;
+  }
+  .lb-item.top1 { background:linear-gradient(135deg,#3d2f00,#12183a); border-color:#ffd700; }
+  .lb-item.top2 { background:linear-gradient(135deg,#2a2a2a,#12183a); border-color:#c0c0c0; }
+  .lb-item.top3 { background:linear-gradient(135deg,#2e1a00,#12183a); border-color:#cd7f32; }
+  .rank { width:32px; height:32px; border-radius:50%; background:#0d1130; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:13px; flex-shrink:0; }
+  .avatar { width:36px; height:36px; border-radius:50%; background:linear-gradient(135deg,#0066ff,#00d4ff); display:flex; align-items:center; justify-content:center; font-weight:700; flex-shrink:0; font-size:14px; }
+  .lb-info { flex:1; min-width:0; }
+  .lb-info .name { font-size:12px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .lb-info .total { font-size:10px; color:#00d4ff; }
+  .lb-amount { text-align:right; font-size:11px; font-weight:700; color:#00ff88; white-space:nowrap; }
+
+  .menu-list { padding:0 15px; }
+  .menu-card {
+    background:#12183a; border:1px solid #1e90ff22; border-radius:12px;
+    padding:15px; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center;
+    cursor:pointer; transition:0.3s;
+  }
+  .menu-card:hover { border-color:#00d4ff; }
+  .menu-card .left { display:flex; align-items:center; gap:12px; }
+  .menu-card .mi { font-size:22px; }
+  .menu-card .mt { font-size:13px; font-weight:600; }
+  .menu-card .ms { font-size:11px; color:#888; margin-top:2px; }
+
+  .trx-item {
+    background:#12183a; border:1px solid #1e90ff22; border-radius:12px;
+    padding:12px; margin-bottom:8px;
+  }
+  .trx-item .top { display:flex; justify-content:space-between; margin-bottom:5px; align-items:center; }
+  .trx-item .title { font-size:12px; font-weight:600; }
+  .trx-item .status { font-size:10px; padding:3px 8px; border-radius:10px; font-weight:700; }
+  .trx-item .status.success { background:#00ff8833; color:#00ff88; }
+  .trx-item .status.pending { background:#ffaa0033; color:#ffaa00; }
+  .trx-item .bottom { display:flex; justify-content:space-between; font-size:11px; color:#888; }
+  .trx-item .price { color:#00d4ff; font-weight:700; }
+  .trx-item .receipt-btn {
+    background:#00d4ff22; border:1px solid #00d4ff55; color:#00d4ff;
+    padding:4px 10px; border-radius:6px; font-size:10px; font-weight:700;
+    cursor:pointer; margin-top:6px;
+  }
+
+  .modal {
+    display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85);
+    z-index:200; justify-content:center; align-items:flex-end;
+  }
+  .modal.active { display:flex; }
+  .modal-content {
+    background:#12183a; width:100%; max-width:500px; border-radius:20px 20px 0 0;
+    padding:20px; max-height:90vh; overflow-y:auto; animation:slideUp 0.3s;
+    scrollbar-width:thin; scrollbar-color:#00d4ff #0d1130;
+  }
+  .modal-content::-webkit-scrollbar { width:6px; }
+  .modal-content::-webkit-scrollbar-track { background:#0d1130; }
+  .modal-content::-webkit-scrollbar-thumb { background:#00d4ff; border-radius:10px; }
+  @keyframes slideUp { from{transform:translateY(100%)} to{transform:translateY(0)} }
+  .modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:15px; }
+  .modal-header h3 { font-size:15px; }
+  .close-btn { background:#0d1130; border:none; color:#fff; width:32px; height:32px; border-radius:50%; cursor:pointer; font-size:18px; }
+
+  .input-group { margin-bottom:12px; }
+  .input-group label { display:block; font-size:12px; margin-bottom:6px; color:#aaa; }
+  .input-group input {
+    width:100%; padding:12px; background:#0d1130; border:1px solid #1e90ff33;
+    border-radius:10px; color:#fff; font-size:13px; outline:none;
+    transition:0.3s;
+  }
+  .input-group input:focus { border-color:#00d4ff; }
+  .input-group input.verified { border-color:#00ff88; background:#0a2a1a; }
+  .input-group input.error { border-color:#ff3b3b; background:#2a0a0a; }
+
+  .verify-row { display:flex; gap:8px; }
+  .verify-row input { flex:1; }
+  .verify-btn {
+    padding:0 16px; border:none; border-radius:10px;
+    background:linear-gradient(135deg,#0066ff,#00d4ff); color:#fff;
+    font-weight:700; font-size:12px; cursor:pointer; white-space:nowrap;
+    transition:0.3s;
+  }
+  .verify-btn:disabled { opacity:0.6; cursor:not-allowed; }
+
+  .verify-msg {
+    margin-top:6px; font-size:11px; padding:8px 10px; border-radius:8px;
+    display:none;
+  }
+  .verify-msg.show { display:block; }
+  .verify-msg.success { background:#00ff8822; color:#00ff88; border:1px solid #00ff8833; }
+  .verify-msg.error { background:#ff3b3b22; color:#ff3b3b; border:1px solid #ff3b3b33; }
+  .verify-msg.loading { background:#00d4ff22; color:#00d4ff; border:1px solid #00d4ff33; }
+
+  .info-box {
+    background:#0a1440; border-left:3px solid #00d4ff; padding:10px 12px;
+    border-radius:8px; margin-bottom:12px; font-size:11px; color:#aac;
+  }
+
+  .cat-label { font-size:11px; margin:12px 0 4px; font-weight:700; }
+
+  .nominal-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:10px; }
+  .nominal {
+    padding:12px; background:#0d1130; border:1px solid #1e90ff33; border-radius:10px;
+    cursor:pointer; text-align:center; transition:0.3s;
+  }
+  .nominal:hover, .nominal.selected { border-color:#00d4ff; background:#0a1440; }
+  .nominal.selected { box-shadow:0 0 12px #00d4ff66; }
+  .nominal .qty { font-size:13px; font-weight:700; }
+  .nominal .price { font-size:11px; color:#00d4ff; margin-top:3px; }
+
+  .pay-methods { display:grid; grid-template-columns:repeat(2,1fr); gap:8px; margin-top:8px; }
+  .pm {
+    padding:10px; background:#0d1130; border:1px solid #1e90ff33; border-radius:10px;
+    cursor:pointer; transition:0.3s; display:flex; align-items:center; gap:8px;
+  }
+  .pm:hover, .pm.selected { border-color:#00d4ff; background:#0a1440; }
+  .pm.selected { box-shadow:0 0 12px #00d4ff66; }
+  .pm .pmi { font-size:20px; }
+  .pm .pmt { font-size:12px; font-weight:600; }
+
+  .summary {
+    background:#0d1130; border-radius:10px; padding:12px; margin-top:12px;
+    border:1px solid #1e90ff33;
+  }
+  .summary-row {
+    display:flex; justify-content:space-between; font-size:12px;
+    margin-bottom:6px; color:#aaa;
+  }
+  .summary-row.total {
+    border-top:1px dashed #1e90ff33; padding-top:8px; margin-top:8px;
+    color:#fff; font-weight:800; font-size:14px;
+  }
+  .summary-row.total .val { color:#00ff88; }
+
+  .pay-btn {
+    width:100%; padding:14px; margin-top:15px; border:none; border-radius:12px;
+    background:linear-gradient(135deg,#0066ff,#00d4ff); color:#fff; font-size:14px;
+    font-weight:700; cursor:pointer; transition:0.3s;
+  }
+  .pay-btn:hover { transform:scale(1.02); box-shadow:0 5px 20px #00d4ff66; }
+  .pay-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+  .ref-box {
+    background:linear-gradient(135deg,#12183a,#0d1130); border:1px solid #00d4ff55;
+    border-radius:15px; padding:20px; margin:15px; text-align:center;
+  }
+  .ref-code {
+    background:#0d1130; border:2px dashed #00d4ff; padding:15px; border-radius:10px;
+    font-size:22px; font-weight:800; letter-spacing:3px; color:#00d4ff; margin:15px 0;
+  }
+  .ref-btn {
+    background:linear-gradient(135deg,#0066ff,#00d4ff); border:none; color:#fff;
+    padding:12px 24px; border-radius:10px; font-weight:700; cursor:pointer; font-size:13px;
+  }
+  .ref-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-top:15px; }
+  .ref-stat { background:#0d1130; padding:12px; border-radius:10px; }
+  .ref-stat .num { font-size:18px; font-weight:800; color:#00ff88; }
+  .ref-stat .lbl { font-size:11px; color:#888; margin-top:3px; }
+
+  .promo-card {
+    margin:0 15px 12px; border-radius:15px; overflow:hidden;
+    background:#12183a; border:1px solid #1e90ff22;
+  }
+  .promo-head {
+    padding:18px; background:linear-gradient(135deg,#0066ff,#7b2fff);
+    font-size:15px; font-weight:800;
+  }
+  .promo-head.green { background:linear-gradient(135deg,#00aa66,#00d4ff); }
+  .promo-head.orange { background:linear-gradient(135deg,#ff6600,#ffaa00); }
+  .promo-body { padding:15px; }
+  .promo-body .desc { font-size:12px; color:#ccc; margin-bottom:8px; }
+  .promo-body .period { font-size:11px; color:#888; }
+
+  .bottom-nav {
+    position:fixed; bottom:0; left:0; right:0; background:#0d1130;
+    display:flex; justify-content:space-around; padding:10px 0; border-top:1px solid #1e90ff33;
+    z-index:100;
+  }
+  .nav-item { text-align:center; cursor:pointer; color:#666; font-size:10px; flex:1; transition:0.3s; }
+  .nav-item.active { color:#00d4ff; }
+  .nav-item .icon { font-size:20px; display:block; margin-bottom:2px; }
+
+  .toast {
+    position:fixed; bottom:100px; left:50%; transform:translateX(-50%);
+    background:#00d4ff; color:#0a0e27; padding:12px 24px; border-radius:30px;
+    font-weight:700; font-size:13px; opacity:0; transition:0.3s; pointer-events:none; z-index:300;
+  }
+  .toast.show { opacity:1; bottom:120px; }
+
+  .back-btn {
+    background:#0d1130; border:1px solid #1e90ff33; color:#00d4ff;
+    padding:8px 16px; border-radius:20px; font-size:12px; cursor:pointer;
+    margin:15px; font-weight:600;
+  }
+
+  /* LOGIN / REGISTER FORM */
+  .auth-box {
+    background:#12183a; border:1px solid #1e90ff33; border-radius:15px;
+    padding:25px; margin:15px;
+  }
+  .auth-box h2 { font-size:18px; margin-bottom:15px; text-align:center; }
+  .auth-box .tab-switch {
+    display:flex; gap:5px; margin-bottom:20px; background:#0d1130;
+    padding:4px; border-radius:10px;
+  }
+  .auth-box .tab-switch button {
+    flex:1; padding:10px; border:none; background:none; color:#666;
+    font-weight:700; cursor:pointer; border-radius:8px; font-size:13px;
+  }
+  .auth-box .tab-switch button.active { background:#00d4ff; color:#0a0e27; }
+  .auth-btn {
+    width:100%; padding:14px; border:none; border-radius:12px;
+    background:linear-gradient(135deg,#0066ff,#00d4ff); color:#fff;
+    font-size:14px; font-weight:700; cursor:pointer; margin-top:10px;
+  }
+  .auth-msg { text-align:center; font-size:12px; margin-top:10px; }
+  .auth-msg.success { color:#00ff88; }
+  .auth-msg.error { color:#ff3b3b; }
+
+  /* RECEIPT MODAL */
+  .receipt-box {
+    background:#fff; color:#000; padding:20px; border-radius:10px;
+    margin:15px 0; font-size:12px;
+  }
+  .receipt-box .header { text-align:center; border-bottom:1px dashed #000; padding-bottom:10px; margin-bottom:10px; }
+  .receipt-box .header h3 { font-size:16px; margin-bottom:5px; }
+  .receipt-box .row { display:flex; justify-content:space-between; margin-bottom:5px; }
+  .receipt-box .divider { border-top:1px dashed #000; margin:10px 0; }
+  .receipt-box .total { font-weight:800; font-size:14px; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <div class="logo">TopUp<span>KrizzStore</span> 🎮</div>
+  <div class="header-right">
+    <div class="saldo">Saldo: <b id="headerSaldo">Rp 250.000</b></div>
+    <button class="user-btn" id="userBtn" onclick="toggleAuth()">👤 Masuk</button>
+  </div>
+</header>
+
+<!-- PAGE HOME -->
+<div class="page active" id="page-home">
+  <div class="banner">
+    <h2>🔥 Promo Spesial Hari Ini!</h2>
+    <p>Diskon 10% semua top up game + bonus poin leaderboard 2x</p>
+  </div>
+
+  <div class="quick">
+    <div class="quick-btn" onclick="openPulsa()">
+      <div class="icon">📱</div><div class="label">Pulsa</div>
+    </div>
+    <div class="quick-btn" onclick="openToken()">
+      <div class="icon">⚡</div><div class="label">Token Listrik</div>
+    </div>
+    <div class="quick-btn" onclick="showPage('trx')">
+      <div class="icon">📋</div><div class="label">Cek Transaksi</div>
+    </div>
+  </div>
+
+  <div class="search-wrap">
+    <div class="search-box">
+      <span class="icon">🔍</span>
+      <input type="text" id="searchInput" placeholder="Cari game... (ML, FF, MCGG, PUBG, dll)" oninput="filterGames()">
+      <button class="clear-btn" onclick="clearSearch()" id="clearBtn" style="display:none;">✕</button>
+    </div>
+  </div>
+
+  <div class="chips" id="chipWrap">
+    <div class="chip active" data-cat="all">Semua</div>
+    <div class="chip" data-cat="MOBA">MOBA</div>
+    <div class="chip" data-cat="Battle Royale">Battle Royale</div>
+    <div class="chip" data-cat="RPG">RPG</div>
+    <div class="chip" data-cat="FPS">FPS</div>
+    <div class="chip" data-cat="Casual">Casual</div>
+  </div>
+
+  <div class="section-title">
+    🎮 Semua Game <small id="gameCount">12 game</small>
+  </div>
+  <div class="game-grid" id="gameGrid"></div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- PAGE RANK -->
+<div class="page" id="page-rank">
+  <div class="section-title">🏆 Leaderboard Top Up <small>Real-time</small></div>
+  <div class="tabs" id="lbTabs">
+    <div class="tab active" data-tab="harian">Harian</div>
+    <div class="tab" data-tab="bulanan">Bulanan</div>
+    <div class="tab" data-tab="tahunan">Tahunan</div>
+    <div class="tab" data-tab="pulsa">Pulsa</div>
+    <div class="tab" data-tab="token">Token Listrik</div>
+  </div>
+  <div class="leaderboard" id="leaderboard"></div>
+</div>
+
+<!-- PAGE TRANSAKSI -->
+<div class="page" id="page-trx">
+  <button class="back-btn" onclick="showPage('home')">← Kembali</button>
+  <div class="section-title">📋 Riwayat Transaksi</div>
+  <div class="menu-list" id="trxList"></div>
+</div>
+
+<!-- PAGE PROMO -->
+<div class="page" id="page-promo">
+  <button class="back-btn" onclick="showPage('home')">← Kembali</button>
+  <div class="section-title">🎁 Promo Spesial</div>
+  <div class="promo-card">
+    <div class="promo-head">🎮 Diskon 10% Semua Game</div>
+    <div class="promo-body">
+      <div class="desc">Berlaku untuk semua top up game, min. transaksi Rp 20.000</div>
+      <div class="period">📅 1 - 31 Oktober 2026</div>
+    </div>
+  </div>
+  <div class="promo-card">
+    <div class="promo-head green">⚡ Cashback Token Listrik 5%</div>
+    <div class="promo-body">
+      <div class="desc">Cashback langsung masuk saldo setiap beli token listrik</div>
+      <div class="period">📅 Sepanjang bulan Oktober</div>
+    </div>
+  </div>
+  <div class="promo-card">
+    <div class="promo-head orange">📱 Pulsa Gratis 5rb</div>
+    <div class="promo-body">
+      <div class="desc">Min. top up pulsa Rp 50.000, gratis pulsa 5rb</div>
+      <div class="period">📅 Setiap Sabtu & Minggu</div>
+    </div>
+  </div>
+  <div class="promo-card">
+    <div class="promo-head">👥 Bonus Referral Rp 10.000</div>
+    <div class="promo-body">
+      <div class="desc">Ajak teman daftar & transaksi, dapat Rp 10.000 per orang</div>
+      <div class="period">📅 Berlaku selamanya</div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE REFERRAL -->
+<div class="page" id="page-ref">
+  <button class="back-btn" onclick="showPage('home')">← Kembali</button>
+  <div class="section-title">👥 Program Referral</div>
+  <div class="ref-box">
+    <div style="font-size:13px;color:#ccc;">Kode Referral Anda</div>
+    <div class="ref-code" id="refCode">KRIZZ2026</div>
+    <button class="ref-btn" onclick="copyRef()">📋 Salin Kode</button>
+    <div class="ref-stats">
+      <div class="ref-stat"><div class="num">12</div><div class="lbl">Total Referral</div></div>
+      <div class="ref-stat"><div class="num">Rp 120.000</div><div class="lbl">Bonus Didapat</div></div>
+    </div>
+  </div>
+  <div class="section-title" style="padding-top:10px;">Cara Kerja</div>
+  <div class="menu-list">
+    <div class="menu-card"><div class="left"><div class="mi">1️⃣</div><div><div class="mt">Bagikan Kode</div><div class="ms">Kirim kode ke teman</div></div></div></div>
+    <div class="menu-card"><div class="left"><div class="mi">2️⃣</div><div><div class="mt">Teman Daftar</div><div class="ms">Masukkan kode Anda saat daftar</div></div></div></div>
+    <div class="menu-card"><div class="left"><div class="mi">3️⃣</div><div><div class="mt">Dapat Bonus</div><div class="ms">Rp 10.000 per teman transaksi</div></div></div></div>
+  </div>
+</div>
+
+<!-- PAGE AUTH (Login/Register) -->
+<div class="page" id="page-auth">
+  <button class="back-btn" onclick="showPage('home')">← Kembali</button>
+  <div class="auth-box">
+    <div class="tab-switch">
+      <button class="active" onclick="switchAuthTab('login')">Masuk</button>
+      <button onclick="switchAuthTab('register')">Daftar</button>
+    </div>
+
+    <!-- LOGIN FORM -->
+    <div id="loginForm">
+      <div class="input-group">
+        <label>Username</label>
+        <input type="text" id="loginUsername" placeholder="Masukkan username">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="loginPassword" placeholder="Masukkan password">
+      </div>
+      <button class="auth-btn" onclick="doLogin()">Masuk</button>
+      <div class="auth-msg" id="loginMsg"></div>
+    </div>
+
+    <!-- REGISTER FORM -->
+    <div id="registerForm" style="display:none;">
+      <div class="input-group">
+        <label>Username</label>
+        <input type="text" id="regUsername" placeholder="Buat username">
+      </div>
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="regEmail" placeholder="email@example.com">
+      </div>
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="regPassword" placeholder="Min. 6 karakter">
+      </div>
+      <button class="auth-btn" onclick="doRegister()">Daftar</button>
+      <div class="auth-msg" id="regMsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <div class="nav-item active" data-page="home" onclick="showPage('home')"><span class="icon">🏠</span>Home</div>
+  <div class="nav-item" data-page="rank" onclick="showPage('rank')"><span class="icon">🏆</span>Rank</div>
+  <div class="nav-item" data-page="promo" onclick="showPage('promo')"><span class="icon">🎁</span>Promo</div>
+  <div class="nav-item" data-page="ref" onclick="showPage('ref')"><span class="icon">👥</span>Referral</div>
+  <div class="nav-item" data-page="trx" onclick="showPage('trx')"><span class="icon">📋</span>Transaksi</div>
+</div>
+
+<!-- MODAL TOPUP -->
+<div class="modal" id="topupModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 id="modalTitle">Top Up</h3>
+      <button class="close-btn" onclick="closeModal()">×</button>
+    </div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- MODAL RECEIPT -->
+<div class="modal" id="receiptModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>🧾 Struk Pembayaran</h3>
+      <button class="close-btn" onclick="closeReceipt()">×</button>
+    </div>
+    <div id="receiptBody"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Berhasil!</div>
+
+<script>
+// ============ KONFIGURASI DIGIFLAZZ ============
+// ⚠️ ISI USERNAME & API KEY ANDA DI SINI
+const DIGIFLAZZ_CONFIG = {
+  username: 'USERNAME_DIGIFLAZZ_ANDA',  // Ganti dengan username Anda
+  apiKey: 'API_KEY_DIGIFLAZZ_ANDA',      // Ganti dengan API key Anda
+  // Untuk produksi, gunakan production key
+  // Untuk testing, gunakan development key
+};
+
+// ============ DATA GAME ============
+const games = [
+  { id:1, name:"Mobile Legends", short:"ML", cat:"MOBA", emoji:"⚔️", hot:true, needServer:false, items:[
+    {qty:"5 Diamond", price:1500},{qty:"12 Diamond", price:3500},
+    {qty:"19 Diamond", price:5500},{qty:"28 Diamond", price:8000},
+    {qty:"36 Diamond", price:10000},{qty:"44 Diamond", price:12000},
+    {qty:"56 Diamond", price:15000},{qty:"86 Diamond", price:22000},
+    {qty:"172 Diamond", price:43000},{qty:"257 Diamond", price:64000},
+    {qty:"344 Diamond", price:85000},{qty:"429 Diamond", price:105000},
+    {qty:"514 Diamond", price:125000},{qty:"600 Diamond", price:145000},
+    {qty:"706 Diamond", price:170000},{qty:"878 Diamond", price:210000},
+    {qty:"1050 Diamond", price:250000},{qty:"1412 Diamond", price:335000},
+    {qty:"2195 Diamond", price:520000},{qty:"2900 Diamond", price:680000}
+  ]},
+  { id:2, name:"Free Fire", short:"FF", cat:"Battle Royale", emoji:"🔥", hot:true, needServer:false, items:[
+    {qty:"5 Diamond", price:1500},{qty:"10 Diamond", price:2500},
+    {qty:"20 Diamond", price:4500},{qty:"50 Diamond", price:8000},
+    {qty:"70 Diamond", price:11000},{qty:"100 Diamond", price:15000},
+    {qty:"140 Diamond", price:21000},{qty:"210 Diamond", price:31000},
+    {qty:"355 Diamond", price:52000},{qty:"500 Diamond", price:72000},
+    {qty:"720 Diamond", price:103000},{qty:"1000 Diamond", price:142000},
+    {qty:"1450 Diamond", price:205000},{qty:"2180 Diamond", price:305000},
+    {qty:"3640 Diamond", price:505000},{qty:"7290 Diamond", price:1005000}
+  ]},
+  { id:3, name:"MCGG", short:"MCGG", cat:"Casual", emoji:"♟️", hot:true, needServer:false, items:[
+    {qty:"5 Diamond", price:1500},{qty:"10 Diamond", price:2800},
+    {qty:"20 Diamond", price:5500},{qty:"50 Diamond", price:13000},
+    {qty:"100 Diamond", price:25000},{qty:"150 Diamond", price:37000},
+    {qty:"250 Diamond", price:61000},{qty:"300 Diamond", price:73000},
+    {qty:"500 Diamond", price:120000},{qty:"750 Diamond", price:180000},
+    {qty:"1000 Diamond", price:238000},{qty:"2000 Diamond", price:470000},
+    {qty:"5000 Diamond", price:1150000}
+  ]},
+  { id:4, name:"PUBG Mobile", short:"PUBG", cat:"Battle Royale", emoji:"🎯", hot:true, needServer:false, items:[
+    {qty:"10 UC", price:3000},{qty:"25 UC", price:7000},
+    {qty:"60 UC", price:16000},{qty:"120 UC", price:31000},
+    {qty:"180 UC", price:46000},{qty:"325 UC", price:79000},
+    {qty:"385 UC", price:94000},{qty:"660 UC", price:158000},
+    {qty:"720 UC", price:172000},{qty:"1800 UC", price:415000},
+    {qty:"3850 UC", price:830000},{qty:"8100 UC", price:1690000}
+  ]},
+  { id:5, name:"Genshin Impact", short:"GI", cat:"RPG", emoji:"⭐", needServer:true, items:[
+    {qty:"60 Crystal", price:16000},{qty:"300 Crystal", price:79000},
+    {qty:"330 Crystal", price:84000},{qty:"1090 Crystal", price:249000},
+    {qty:"2240 Crystal", price:479000},{qty:"3880 Crystal", price:799000},
+    {qty:"8080 Crystal", price:1599000}
+  ]},
+  { id:6, name:"Valorant", short:"VAL", cat:"FPS", emoji:"🔫", needServer:false, items:[
+    {qty:"125 Points", price:15000},{qty:"420 Points", price:49000},
+    {qty:"700 Points", price:79000},{qty:"1375 Points", price:149000},
+    {qty:"2400 Points", price:249000},{qty:"4000 Points", price:399000},
+    {qty:"8150 Points", price:799000}
+  ]},
+  { id:7, name:"Higgs Domino", short:"HD", cat:"Casual", emoji:"🀄", needServer:false, items:[
+    {qty:"10M Koin", price:3000},{qty:"25M Koin", price:6500},
+    {qty:"50M Koin", price:12000},{qty:"100M Koin", price:22000},
+    {qty:"250M Koin", price:52000},{qty:"500M Koin", price:98000},
+    {qty:"1B Koin", price:185000},{qty:"2B Koin", price:355000},
+    {qty:"5B Koin", price:850000}
+  ]},
+  { id:8, name:"Call of Duty", short:"COD", cat:"FPS", emoji:"🎖️", needServer:false, items:[
+    {qty:"80 CP", price:16000},{qty:"160 CP", price:31000},
+    {qty:"420 CP", price:79000},{qty:"880 CP", price:158000},
+    {qty:"2400 CP", price:415000},{qty:"5000 CP", price:830000},
+    {qty:"10000 CP", price:1590000}
+  ]},
+  { id:9, name:"Honor of Kings", short:"HoK", cat:"MOBA", emoji:"👑", needServer:false, items:[
+    {qty:"16 Token", price:5000},{qty:"80 Token", price:16000},
+    {qty:"240 Token", price:47000},{qty:"400 Token", price:78000},
+    {qty:"500 Token", price:95000},{qty:"800 Token", price:150000},
+    {qty:"1000 Token", price:187000},{qty:"2000 Token", price:370000},
+    {qty:"5000 Token", price:910000}
+  ]},
+  { id:10, name:"Arena of Valor", short:"AoV", cat:"MOBA", emoji:"🛡️", needServer:false, items:[
+    {qty:"40 Voucher", price:8000},{qty:"80 Voucher", price:16000},
+    {qty:"160 Voucher", price:31000},{qty:"250 Voucher", price:47000},
+    {qty:"500 Voucher", price:92000},{qty:"1000 Voucher", price:178000},
+    {qty:"2000 Voucher", price:345000},{qty:"5000 Voucher", price:850000}
+  ]},
+  { id:11, name:"Clash of Clans", short:"CoC", cat:"Casual", emoji:"🏰", needServer:false, items:[
+    {qty:"80 Gems", price:16000},{qty:"500 Gems", price:79000},
+    {qty:"1200 Gems", price:158000},{qty:"2500 Gems", price:315000},
+    {qty:"6500 Gems", price:790000},{qty:"14000 Gems", price:1590000}
+  ]},
+  { id:12, name:"Roblox", short:"RBX", cat:"Casual", emoji:"🧱", needServer:false, items:[
+    {qty:"80 Robux", price:16000},{qty:"160 Robux", price:31000},
+    {qty:"400 Robux", price:72000},{qty:"800 Robux", price:142000},
+    {qty:"1700 Robux", price:295000},{qty:"4500 Robux", price:750000},
+    {qty:"10000 Robux", price:1650000}
+  ]}
+];
+
+// ============ LEADERBOARD ============
+const leaderboardData = {
+  harian: [
+    {name:"Andi_Gaming", total:45, amount:"Rp 2.350.000"},
+    {name:"BudiPro", total:38, amount:"Rp 1.980.000"},
+    {name:"CitraML", total:32, amount:"Rp 1.650.000"},
+    {name:"DediFF", total:27, amount:"Rp 1.420.000"},
+    {name:"EkaTopUp", total:21, amount:"Rp 1.100.000"},
+    {name:"Fajar99", total:18, amount:"Rp 950.000"},
+    {name:"GitaZone", total:15, amount:"Rp 780.000"},
+    {name:"HendraX", total:12, amount:"Rp 620.000"},
+    {name:"IndraGamer", total:10, amount:"Rp 520.000"},
+    {name:"JokoPlay", total:8, amount:"Rp 410.000"}
+  ],
+  bulanan: [
+    {name:"MegaTopUp", total:892, amount:"Rp 45.600.000"},
+    {name:"Andi_Gaming", total:745, amount:"Rp 38.200.000"},
+    {name:"SultanGame", total:623, amount:"Rp 31.500.000"},
+    {name:"BudiPro", total:512, amount:"Rp 26.800.000"},
+    {name:"CitraML", total:434, amount:"Rp 22.100.000"},
+    {name:"RajaDiamond", total:398, amount:"Rp 19.900.000"},
+    {name:"ProPlayer", total:321, amount:"Rp 16.400.000"},
+    {name:"TopUpKing", total:287, amount:"Rp 14.300.000"},
+    {name:"DediFF", total:245, amount:"Rp 12.100.000"},
+    {name:"EkaTopUp", total:198, amount:"Rp 9.800.000"}
+  ],
+  tahunan: [
+    {name:"SultanTopUp", total:12480, amount:"Rp 620.000.000"},
+    {name:"MegaTopUp", total:10250, amount:"Rp 512.000.000"},
+    {name:"RajaDiamond", total:8934, amount:"Rp 445.000.000"},
+    {name:"Andi_Gaming", total:7210, amount:"Rp 358.000.000"},
+    {name:"SultanGame", total:6540, amount:"Rp 325.000.000"},
+    {name:"BudiPro", total:5320, amount:"Rp 265.000.000"},
+    {name:"ProPlayer", total:4120, amount:"Rp 205.000.000"},
+    {name:"TopUpKing", total:3450, amount:"Rp 172.000.000"},
+    {name:"CitraML", total:2890, amount:"Rp 144.000.000"},
+    {name:"RajaFF", total:2340, amount:"Rp 117.000.000"}
+  ],
+  pulsa: [
+    {name:"PulsaMania", total:520, amount:"Rp 26.000.000"},
+    {name:"Andi_Gaming", total:412, amount:"Rp 20.600.000"},
+    {name:"KonterJaya", total:385, amount:"Rp 19.250.000"},
+    {name:"BudiPro", total:298, amount:"Rp 14.900.000"},
+    {name:"PulsaExpress", total:245, amount:"Rp 12.250.000"},
+    {name:"HendraX", total:198, amount:"Rp 9.900.000"},
+    {name:"Fajar99", total:156, amount:"Rp 7.800.000"},
+    {name:"GitaZone", total:132, amount:"Rp 6.600.000"},
+    {name:"IndraGamer", total:110, amount:"Rp 5.500.000"},
+    {name:"JokoPlay", total:95, amount:"Rp 4.750.000"}
+  ],
+  token: [
+    {name:"TokenListrikID", total:390, amount:"Rp 39.000.000"},
+    {name:"KonterJaya", total:325, amount:"Rp 32.500.000"},
+    {name:"MegaTopUp", total:280, amount:"Rp 28.000.000"},
+    {name:"PulsaMania", total:210, amount:"Rp 21.000.000"},
+    {name:"Andi_Gaming", total:185, amount:"Rp 18.500.000"},
+    {name:"HendraX", total:145, amount:"Rp 14.500.000"},
+    {name:"Fajar99", total:112, amount:"Rp 11.200.000"},
+    {name:"GitaZone", total:98, amount:"Rp 9.800.000"},
+    {name:"IndraGamer", total:80, amount:"Rp 8.000.000"},
+    {name:"JokoPlay", total:65, amount:"Rp 6.500.000"}
+  ]
+};
+
+// ============ STATE ============
+let currentCat = 'all';
+let currentSearch = '';
+let selectedPrice = 0;
+let currentGame = null;
+let idVerified = false;
+let selectedPM = '';
+let currentUser = null;
+let transaksiData = [];
+
+// ============ INIT: LOAD USER & TRANSAKSI ============
+function initApp() {
+  const savedUser = localStorage.getItem('krizz_user');
+  if (savedUser) {
+    currentUser = JSON.parse(savedUser);
+    updateUserUI();
+  }
+  
+  const savedTrx = localStorage.getItem('krizz_transaksi');
+  if (savedTrx) {
+    transaksiData = JSON.parse(savedTrx);
+  } else {
+    transaksiData = [
+      {title:"Mobile Legends - 172 Diamond", status:"success", date:"11 Okt 2026, 14:30", price:"Rp 39.000", user:"guest"},
+      {title:"Free Fire - 140 Diamond", status:"success", date:"11 Okt 2026, 10:15", price:"Rp 19.000", user:"guest"},
+      {title:"Token Listrik PLN 50rb", status:"success", date:"10 Okt 2026, 19:45", price:"Rp 52.000", user:"guest"}
+    ];
+  }
+  
+  renderGames();
+  renderLeaderboard('harian');
+  renderTransaksi();
+}
+
+// ============ USER UI ============
+function updateUserUI() {
+  if (currentUser) {
+    document.getElementById('userBtn').textContent = '👤 ' + currentUser.username;
+    const saldo = currentUser.saldo || 250000;
+    document.getElementById('headerSaldo').textContent = 'Rp ' + saldo.toLocaleString('id-ID');
+  } else {
+    document.getElementById('userBtn').textContent = '👤 Masuk';
+  }
+}
+
+function toggleAuth() {
+  if (currentUser) {
+    // Logout
+    localStorage.removeItem('krizz_user');
+    currentUser = null;
+    updateUserUI();
+    showToast('👋 Berhasil logout');
+    showPage('home');
+  } else {
+    showPage('auth');
+  }
+}
+
+// ============ AUTH ============
+function switchAuthTab(tab) {
+  document.querySelectorAll('.auth-box .tab-switch button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+}
+
+function doRegister() {
+  const username = document.getElementById('regUsername').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const password = document.getElementById('regPassword').value;
+  const msg = document.getElementById('regMsg');
+  
+  if (!username || !email || !password) {
+    msg.className = 'auth-msg error';
+    msg.textContent = '❌ Semua field harus diisi';
+    return;
+  }
+  if (password.length < 6) {
+    msg.className = 'auth-msg error';
+    msg.textContent = '❌ Password minimal 6 karakter';
+    return;
+  }
+  
+  // Cek username sudah ada
+  const users = JSON.parse(localStorage.getItem('krizz_users') || '[]');
+  if (users.find(u => u.username === username)) {
+    msg.className = 'auth-msg error';
+    msg.textContent = '❌ Username sudah digunakan';
+    return;
+  }
+  
+  // Simpan user baru dengan saldo awal
+  const newUser = { username, email, password, saldo: 250000, createdAt: Date.now() };
+  users.push(newUser);
+  localStorage.setItem('krizz_users', JSON.stringify(users));
+  
+  msg.className = 'auth-msg success';
+  msg.textContent = '✅ Registrasi berhasil! Silakan login.';
+  
+  // Auto switch ke login
+  setTimeout(() => {
+    document.querySelector('.auth-box .tab-switch button:nth-child(1)').click();
+    document.getElementById('loginUsername').value = username;
+  }, 1500);
+}
+
+function doLogin() {
+  const username = document.getElementById('loginUsername').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const msg = document.getElementById('loginMsg');
+  
+  const users = JSON.parse(localStorage.getItem('krizz_users') || '[]');
+  const user = users.find(u => u.username === username && u.password === password);
+  
+  if (!user) {
+    msg.className = 'auth-msg error';
+    msg.textContent = '❌ Username atau password salah';
+    return;
+  }
+  
+  // Simpan sesi
+  currentUser = user;
+  localStorage.setItem('krizz_user', JSON.stringify(user));
+  
+  msg.className = 'auth-msg success';
+  msg.textContent = '✅ Login berhasil!';
+  
+  updateUserUI();
+  setTimeout(() => {
+    showPage('home');
+    showToast('👋 Selamat datang, ' + user.username + '!');
+  }, 1000);
+}
+
+// ============ RENDER GAMES ============
+function renderGames() {
+  const grid = document.getElementById('gameGrid');
+  const filtered = games.filter(g => {
+    const matchCat = currentCat === 'all' || g.cat === currentCat;
+    const q = currentSearch.toLowerCase();
+    const matchSearch = q === '' || g.name.toLowerCase().includes(q) || g.short.toLowerCase().includes(q) || g.cat.toLowerCase().includes(q);
+    return matchCat && matchSearch;
+  });
+  document.getElementById('gameCount').textContent = filtered.length + ' game';
+  if (filtered.length === 0) {
+    grid.innerHTML = `<div class="no-result">😢 Game tidak ditemukan</div>`;
+    return;
+  }
+  grid.innerHTML = filtered.map(g => `
+    <div class="game-card" onclick="openGame(${g.id})">
+      ${g.hot ? '<div class="badge-hot">🔥 HOT</div>' : ''}
+      <div class="game-logo">${g.emoji}</div>
+      <div class="game-name">${g.name}</div>
+    </div>
+  `).join('');
+}
+
+function filterGames() {
+  currentSearch = document.getElementById('searchInput').value;
+  document.getElementById('clearBtn').style.display = currentSearch ? 'block' : 'none';
+  renderGames();
+}
+function clearSearch() {
+  document.getElementById('searchInput').value = '';
+  currentSearch = '';
+  document.getElementById('clearBtn').style.display = 'none';
+  renderGames();
+}
+document.querySelectorAll('.chip').forEach(chip => {
+  chip.onclick = () => {
+    document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentCat = chip.dataset.cat;
+    renderGames();
+  };
+});
+
+// ============ LEADERBOARD ============
+function renderLeaderboard(tab) {
+  const data = leaderboardData[tab];
+  document.getElementById('leaderboard').innerHTML = data.map((u,i) => {
+    const rank = i+1;
+    const rankClass = rank<=3 ? `top${rank}` : '';
+    const medal = rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
+    return `
+      <div class="lb-item ${rankClass}">
+        <div class="rank">${medal}</div>
+        <div class="avatar">${u.name[0]}</div>
+        <div class="lb-info">
+          <div class="name">${u.name}</div>
+          <div class="total">${u.total} transaksi</div>
+        </div>
+        <div class="lb-amount">${u.amount}</div>
+      </div>
+    `;
+  }).join('');
+}
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    renderLeaderboard(tab.dataset.tab);
+  };
+});
+
+// ============ TRANSAKSI ============
+function renderTransaksi() {
+  const list = document.getElementById('trxList');
+  if (transaksiData.length === 0) {
+    list.innerHTML = '<div class="no-result">Belum ada transaksi</div>';
+    return;
+  }
+  list.innerHTML = transaksiData.map((t, idx) => `
+    <div class="trx-item">
+      <div class="top">
+        <div class="title">${t.title}</div>
+        <div class="status ${t.status}">${t.status === 'success' ? '✓ Sukses' : '⏳ Pending'}</div>
+      </div>
+      <div class="bottom">
+        <span>${t.date}</span>
+        <span class="price">${t.price}</span>
+      </div>
+      <button class="receipt-btn" onclick="showReceipt(${idx})">🧾 Lihat Struk</button>
+    </div>
+  `).join('');
+}
+
+// ============ STRUK ============
+function showReceipt(idx) {
+  const t = transaksiData[idx];
+  const receiptBody = document.getElementById('receiptBody');
+  
+  const invNum = 'INV-' + Date.now().toString().slice(-8);
+  
+  receiptBody.innerHTML = `
+    <div class="receipt-box">
+      <div class="header">
+        <h3>TopUpKrizzStore</h3>
+        <div style="font-size:10px;">Top Up All Game Termurah</div>
+      </div>
+      <div class="row"><span>No. Invoice</span><span>${invNum}</span></div>
+      <div class="row"><span>Tanggal</span><span>${t.date}</span></div>
+      <div class="row"><span>Pembeli</span><span>${currentUser ? currentUser.username : 'Guest'}</span></div>
+      <div class="divider"></div>
+      <div class="row"><span>Produk</span><span>${t.title}</span></div>
+      <div class="row"><span>Status</span><span>${t.status === 'success' ? '✓ Sukses' : '⏳ Pending'}</span></div>
+      <div class="divider"></div>
+      <div class="row total"><span>TOTAL</span><span>${t.price}</span></div>
+      <div style="text-align:center; margin-top:15px; font-size:10px; color:#666;">
+        Terima kasih telah berbelanja!<br>
+        Struk ini adalah bukti pembayaran yang sah.
+      </div>
+    </div>
+    <button class="pay-btn" onclick="downloadPDF(${idx})">📄 Download PDF</button>
+  `;
+  
+  document.getElementById('receiptModal').classList.add('active');
+}
+
+function closeReceipt() {
+  document.getElementById('receiptModal').classList.remove('active');
+}
+
+function downloadPDF(idx) {
+  const t = transaksiData[idx];
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a5');
+  
+  const invNum = 'INV-' + Date.now().toString().slice(-8);
+  const pageWidth = doc.internal.pageSize.width;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(16);
+  doc.text('TopUpKrizzStore', pageWidth / 2, 20, { align: 'center' });
+  
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(9);
+  doc.text('Top Up All Game Termurah', pageWidth / 2, 26, { align: 'center' });
+  
+  doc.setLineWidth(0.5);
+  doc.line(10, 32, pageWidth - 10, 32);
+  
+  doc.setFontSize(10);
+  let y = 42;
+  doc.text('No. Invoice: ' + invNum, 10, y);
+  y += 6;
+  doc.text('Tanggal: ' + t.date, 10, y);
+  y += 6;
+  doc.text('Pembeli: ' + (currentUser ? currentUser.username : 'Guest'), 10, y);
+  y += 10;
+  
+  doc.line(10, y, pageWidth - 10, y);
+  y += 8;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.text('Detail Transaksi:', 10, y);
+  y += 7;
+  doc.setFont('helvetica', 'normal');
+  doc.text('Produk: ' + t.title, 10, y);
+  y += 6;
+  doc.text('Status: ' + (t.status === 'success' ? 'Sukses' : 'Pending'), 10, y);
+  y += 10;
+  
+  doc.line(10, y, pageWidth - 10, y);
+  y += 8;
+  
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.text('TOTAL: ' + t.price, 10, y);
+  
+  y += 15;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.text('Terima kasih telah berbelanja!', pageWidth / 2, y, { align: 'center' });
+  doc.text('Struk ini adalah bukti pembayaran yang sah.', pageWidth / 2, y + 5, { align: 'center' });
+  
+  doc.save('struk-' + invNum + '.pdf');
+  showToast('📄 Struk berhasil didownload!');
+}
+
+// ============ OPEN MODAL GAME ============
+function openGame(id) {
+  currentGame = games.find(g => g.id === id);
+  selectedPrice = 0;
+  idVerified = false;
+  selectedPM = '';
+  
+  const game = currentGame;
+  document.getElementById('modalTitle').textContent = `Top Up ${game.name} ${game.emoji}`;
+  
+  const serverInput = game.needServer ? `
+    <div class="input-group">
+      <label>Server ID</label>
+      <input type="text" id="serverInput" placeholder="Contoh: 2001">
+    </div>
+  ` : '';
+  
+  document.getElementById('modalBody').innerHTML = `
+    <div class="info-box">
+      💡 Masukkan User ID, klik <b>Cek ID</b> untuk verifikasi nickname
+    </div>
+    
+    <div class="input-group">
+      <label>User ID / Nickname</label>
+      <div class="verify-row">
+        <input type="text" id="userIdInput" placeholder="Masukkan User ID" oninput="resetVerify()">
+        <button class="verify-btn" id="verifyBtn" onclick="verifyId()">Cek ID</button>
+      </div>
+      <div class="verify-msg" id="verifyMsg"></div>
+    </div>
+    
+    ${serverInput}
+    
+    <div id="afterVerify" style="display:none;">
+      <div class="input-group">
+        <label>Pilih Nominal <span style="color:#00d4ff;font-size:10px;">(${game.items.length} pilihan)</span></label>
+        ${renderNominalGroups(game.items)}
+      </div>
+      
+      <div class="input-group">
+        <label>Metode Pembayaran</label>
+        <div class="pay-methods" id="payMethods">
+          <div class="pm" data-pm="Saldo" onclick="selectPM(this)"><span class="pmi">💰</span><div><div class="pmt">Saldo</div><div style="font-size:10px;color:#888;">Rp ${currentUser ? (currentUser.saldo || 0).toLocaleString('id-ID') : '0'}</div></div></div>
+          <div class="pm" data-pm="QRIS" onclick="selectPM(this)"><span class="pmi">📱</span><div><div class="pmt">QRIS</div></div></div>
+          <div class="pm" data-pm="DANA" onclick="selectPM(this)"><span class="pmi">💙</span><div><div class="pmt">DANA</div></div></div>
+          <div class="pm" data-pm="OVO" onclick="selectPM(this)"><span class="pmi">💜</span><div><div class="pmt">OVO</div></div></div>
+        </div>
+      </div>
+      
+      <div class="summary">
+        <div class="summary-row"><span>Subtotal</span><span id="sumSub">Rp 0</span></div>
+        <div class="summary-row"><span>Biaya Admin</span><span id="sumAdmin">Rp 0</span></div>
+        <div class="summary-row total"><span>Total Bayar</span><span class="val" id="sumTotal">Rp 0</span></div>
+      </div>
+      
+      <button class="pay-btn" onclick="pay()" id="payBtn" disabled>Bayar Sekarang</button>
+    </div>
+  `;
+  document.getElementById('topupModal').classList.add('active');
+}
+
+function renderNominalGroups(items) {
+  const populer = items.slice(0, 4);
+  const sedang = items.slice(4, 10);
+  const jumbo = items.slice(10);
+  let html = '';
+  const group = (list, label, color) => {
+    if (!list.length) return '';
+    return `<div class="cat-label" style="color:${color};">${label}</div>
+      <div class="nominal-grid">
+        ${list.map(it => `
+          <div class="nominal" onclick="selectNominal(this,${it.price},'${it.qty}')">
+            <div class="qty">${it.qty}</div>
+            <div class="price">Rp ${it.price.toLocaleString('id-ID')}</div>
+          </div>
+        `).join('')}
+      </div>`;
+  };
+  html += group(populer, '⭐ Populer', '#00d4ff');
+  html += group(sedang, '💎 Sedang', '#ffaa00');
+  html += group(jumbo, '🚀 Jumbo', '#ff3b3b');
+  return html;
+}
+
+// ============ VERIFIKASI ID (REAL untuk PLN, SIMULASI untuk Game) ============
+function resetVerify() {
+  idVerified = false;
+  const inp = document.getElementById('userIdInput');
+  const msg = document.getElementById('verifyMsg');
+  inp.classList.remove('verified', 'error');
+  msg.className = 'verify-msg';
+  const after = document.getElementById('afterVerify');
+  if (after) after.style.display = 'none';
+}
+
+async function verifyId() {
+  const input = document.getElementById('userIdInput');
+  const msg = document.getElementById('verifyMsg');
+  const btn = document.getElementById('verifyBtn');
+  const id = input.value.trim();
+  
+  if (!id) {
+    msg.className = 'verify-msg error show';
+    msg.textContent = '❌ Masukkan User ID terlebih dahulu';
+    return;
+  }
+  
+  // Untuk GAME: simulasi (Digiflazz tidak sediakan cek nickname game)
+  btn.disabled = true;
+  btn.textContent = '...';
+  msg.className = 'verify-msg loading show';
+  msg.textContent = '⏳ Memverifikasi...';
+  
+  // Simulasi delay
+  await new Promise(r => setTimeout(r, 1200));
+  
+  if (/^\d+$/.test(id) && id.length >= 6) {
+    // Generate nickname random (simulasi)
+    const nicknames = ['KrizzGamer99', 'SultanML', 'ProPlayerFF', 'RajaDiamond', 'MasterPUBG', 'GamerSejati', 'TopUpKing', 'SultanGame'];
+    const idx = parseInt(id.slice(-2)) % nicknames.length;
+    const nickname = nicknames[idx];
+    
+    idVerified = true;
+    input.classList.add('verified');
+    msg.className = 'verify-msg success show';
+    msg.innerHTML = `✅ Nickname: <b>${nickname}</b> <span style="font-size:9px;">(simulasi)</span>`;
+    btn.textContent = '✓';
+    document.getElementById('afterVerify').style.display = 'block';
+  } else {
+    idVerified = false;
+    input.classList.add('error');
+    msg.className = 'verify-msg error show';
+    msg.textContent = '❌ User ID tidak valid. Minimal 6 digit angka.';
+    btn.disabled = false;
+    btn.textContent = 'Cek ID';
+  }
+}
+
+// ============ PILIH NOMINAL ============
+function selectNominal(el, price, qty) {
+  document.querySelectorAll('.nominal').forEach(n => n.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPrice = price;
+  updateSummary();
+}
+
+// ============ PILIH METODE BAYAR ============
+function selectPM(el) {
+  document.querySelectorAll('.pm').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedPM = el.dataset.pm;
+  updateSummary();
+}
+
+// ============ SUMMARY ============
+function updateSummary() {
+  const adminFee = selectedPM ? 1000 : 0;
+  const total = selectedPrice + adminFee;
+  document.getElementById('sumSub').textContent = 'Rp ' + selectedPrice.toLocaleString('id-ID');
+  document.getElementById('sumAdmin').textContent = 'Rp ' + adminFee.toLocaleString('id-ID');
+  document.getElementById('sumTotal').textContent = 'Rp ' + total.toLocaleString('id-ID');
+  
+  const payBtn = document.getElementById('payBtn');
+  if (payBtn) payBtn.disabled = !(idVerified && selectedPrice > 0 && selectedPM);
+}
+
+// ============ BAYAR (dengan potong saldo) ============
+async function pay() {
+  if (!idVerified) { showToast('❌ Verifikasi User ID dulu!'); return; }
+  if (!selectedPrice) { showToast('❌ Pilih nominal dulu!'); return; }
+  if (!selectedPM) { showToast('❌ Pilih metode pembayaran!'); return; }
+  
+  const adminFee = 1000;
+  const total = selectedPrice + adminFee;
+  
+  // Kalau bayar pakai Saldo, cek & potong saldo
+  if (selectedPM === 'Saldo') {
+    if (!currentUser) {
+      showToast('❌ Login dulu untuk bayar pakai saldo');
+      return;
+    }
+    const saldoSekarang = currentUser.saldo || 0;
+    if (saldoSekarang < total) {
+      showToast('❌ Saldo tidak cukup! Saldo: Rp ' + saldoSekarang.toLocaleString('id-ID'));
+      return;
+    }
+    
+    // Potong saldo
+    currentUser.saldo = saldoSekarang - total;
+    
+    // Update di localStorage
+    const users = JSON.parse(localStorage.getItem('krizz_users') || '[]');
+    const idx = users.findIndex(u => u.username === currentUser.username);
+    if (idx !== -1) {
+      users[idx].saldo = currentUser.saldo;
+      localStorage.setItem('krizz_users', JSON.stringify(users));
+    }
+    localStorage.setItem('krizz_user', JSON.stringify(currentUser));
+    
+    // Update UI
+    updateUserUI();
+    showToast('💰 Saldo dipotong Rp ' + total.toLocaleString('id-ID'));
+  }
+  
+  // Simpan transaksi
+  const userId = document.getElementById('userIdInput').value;
+  const nominalText = document.querySelector('.nominal.selected .qty').textContent;
+  
+  const newTrx = {
+    title: `${currentGame.name} - ${nominalText}`,
+    status: 'pending',
+    date: new Date().toLocaleString('id-ID', {day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit'}),
+    price: 'Rp ' + total.toLocaleString('id-ID'),
+    userId: userId,
+    user: currentUser ? currentUser.username : 'guest'
+  };
+  
+  transaksiData.unshift(newTrx);
+  localStorage.setItem('krizz_transaksi', JSON.stringify(transaksiData));
+  renderTransaksi();
+  
+  showToast('✅ Pembayaran berhasil diproses!');
+  
+  setTimeout(() => {
+    closeModal();
+    resetState();
+  }, 1500);
+}
+
+function resetState() {
+  selectedPrice = 0;
+  selectedPM = '';
+  idVerified = false;
+  currentGame = null;
+}
+
+// ============ PULSA (dengan cek operator) ============
+function openPulsa() {
+  currentGame = {name:'Pulsa', emoji:'📱', needServer:false, items:[]};
+  selectedPrice = 0; idVerified = false; selectedPM = '';
+  document.getElementById('modalTitle').textContent = '📱 Top Up Pulsa';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="info-box">💡 Masukkan nomor HP, klik <b>Cek Nomor</b> untuk verifikasi</div>
+    <div class="input-group">
+      <label>Nomor HP</label>
+      <div class="verify-row">
+        <input type="tel" id="userIdInput" placeholder="08xxxxxxxxxx" oninput="resetVerify()">
+        <button class="verify-btn" id="verifyBtn" onclick="verifyPhone()">Cek Nomor</button>
+      </div>
+      <div class="verify-msg" id="verifyMsg"></div>
+    </div>
+    <div id="afterVerify" style="display:none;">
+      <div class="input-group">
+        <label>Pilih Nominal</label>
+        <div class="nominal-grid">
+          ${[10000,25000,50000,100000].map(p => `
+            <div class="nominal" onclick="selectNominal(this,${p+1500},'Pulsa ${p/1000}rb')">
+              <div class="qty">Pulsa ${p/1000}rb</div>
+              <div class="price">Rp ${(p+1500).toLocaleString('id-ID')}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Metode Pembayaran</label>
+        <div class="pay-methods">
+          <div class="pm" data-pm="Saldo" onclick="selectPM(this)"><span class="pmi">💰</span><div><div class="pmt">Saldo</div></div></div>
+          <div class="pm" data-pm="QRIS" onclick="selectPM(this)"><span class="pmi">📱</span><div><div class="pmt">QRIS</div></div></div>
+          <div class="pm" data-pm="DANA" onclick="selectPM(this)"><span class="pmi">💙</span><div><div class="pmt">DANA</div></div></div>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="summary-row"><span>Subtotal</span><span id="sumSub">Rp 0</span></div>
+        <div class="summary-row"><span>Biaya Admin</span><span id="sumAdmin">Rp 0</span></div>
+        <div class="summary-row total"><span>Total Bayar</span><span class="val" id="sumTotal">Rp 0</span></div>
+      </div>
+      <button class="pay-btn" onclick="pay()" id="payBtn" disabled>Bayar Sekarang</button>
+    </div>
+  `;
+  document.getElementById('topupModal').classList.add('active');
+}
+
+function verifyPhone() {
+  const input = document.getElementById('userIdInput');
+  const msg = document.getElementById('verifyMsg');
+  const btn = document.getElementById('verifyBtn');
+  const phone = input.value.trim();
+  
+  if (!phone || phone.length < 10) {
+    msg.className = 'verify-msg error show';
+    msg.textContent = '❌ Nomor HP tidak valid (min. 10 digit)';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = '...';
+  msg.className = 'verify-msg loading show';
+  msg.textContent = '⏳ Memverifikasi nomor...';
+  
+  setTimeout(() => {
+    let operator = 'Tidak Diketahui';
+    if (phone.startsWith('0811')||phone.startsWith('0812')||phone.startsWith('0813')||phone.startsWith('0821')||phone.startsWith('0822')||phone.startsWith('0851')) operator = 'Telkomsel';
+    else if (phone.startsWith('0814')||phone.startsWith('0815')||phone.startsWith('0816')||phone.startsWith('0855')||phone.startsWith('0856')||phone.startsWith('0857')||phone.startsWith('0858')) operator = 'Indosat';
+    else if (phone.startsWith('0817')||phone.startsWith('0818')||phone.startsWith('0819')||phone.startsWith('0859')||phone.startsWith('0877')||phone.startsWith('0878')) operator = 'XL';
+    else if (phone.startsWith('0831')||phone.startsWith('0832')||phone.startsWith('0833')||phone.startsWith('0838')) operator = 'Axis';
+    else if (phone.startsWith('0895')||phone.startsWith('0896')||phone.startsWith('0897')||phone.startsWith('0898')||phone.startsWith('0899')) operator = 'Tri';
+    else if (phone.startsWith('0881')||phone.startsWith('0882')||phone.startsWith('0883')||phone.startsWith('0884')||phone.startsWith('0885')||phone.startsWith('0886')||phone.startsWith('0887')||phone.startsWith('0888')||phone.startsWith('0889')) operator = 'Smartfren';
+    
+    idVerified = true;
+    input.classList.add('verified');
+    msg.className = 'verify-msg success show';
+    msg.innerHTML = `✅ Nomor valid - Operator: <b>${operator}</b>`;
+    btn.textContent = '✓';
+    document.getElementById('afterVerify').style.display = 'block';
+  }, 1000);
+}
+
+// ============ TOKEN LISTRIK (dengan cek ID Meter) ============
+function openToken() {
+  currentGame = {name:'Token Listrik', emoji:'⚡', needServer:false};
+  selectedPrice = 0; idVerified = false; selectedPM = '';
+  document.getElementById('modalTitle').textContent = '⚡ Token Listrik PLN';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="info-box">💡 Masukkan ID Meter/No. Pelanggan, klik <b>Cek ID</b></div>
+    <div class="input-group">
+      <label>ID Meter / No. Pelanggan</label>
+      <div class="verify-row">
+        <input type="text" id="userIdInput" placeholder="11-12 digit angka" oninput="resetVerify()">
+        <button class="verify-btn" id="verifyBtn" onclick="verifyMeter()">Cek ID</button>
+      </div>
+      <div class="verify-msg" id="verifyMsg"></div>
+    </div>
+    <div id="afterVerify" style="display:none;">
+      <div class="input-group">
+        <label>Pilih Nominal</label>
+        <div class="nominal-grid">
+          ${[20000,50000,100000,200000].map(p => `
+            <div class="nominal" onclick="selectNominal(this,${p+2000},'Token ${p/1000}rb')">
+              <div class="qty">Token ${p/1000}rb</div>
+              <div class="price">Rp ${(p+2000).toLocaleString('id-ID')}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+      <div class="input-group">
+        <label>Metode Pembayaran</label>
+        <div class="pay-methods">
+          <div class="pm" data-pm="Saldo" onclick="selectPM(this)"><span class="pmi">💰</span><div><div class="pmt">Saldo</div></div></div>
+          <div class="pm" data-pm="QRIS" onclick="selectPM(this)"><span class="pmi">📱</span><div><div class="pmt">QRIS</div></div></div>
+          <div class="pm" data-pm="DANA" onclick="selectPM(this)"><span class="pmi">💙</span><div><div class="pmt">DANA</div></div></div>
+        </div>
+      </div>
+      <div class="summary">
+        <div class="summary-row"><span>Subtotal</span><span id="sumSub">Rp 0</span></div>
+        <div class="summary-row"><span>Biaya Admin</span><span id="sumAdmin">Rp 0</span></div>
+        <div class="summary-row total"><span>Total Bayar</span><span class="val" id="sumTotal">Rp 0</span></div>
+      </div>
+      <button class="pay-btn" onclick="pay()" id="payBtn" disabled>Bayar Sekarang</button>
+    </div>
+  `;
+  document.getElementById('topupModal').classList.add('active');
+}
+
+function verifyMeter() {
+  const input = document.getElementById('userIdInput');
+  const msg = document.getElementById('verifyMsg');
+  const btn = document.getElementById('verifyBtn');
+  const meter = input.value.trim();
+  
+  if (!meter || meter.length < 11) {
+    msg.className = 'verify-msg error show';
+    msg.textContent = '❌ ID Meter harus 11-12 digit';
+    return;
+  }
+  
+  btn.disabled = true;
+  btn.textContent = '...';
+  msg.className = 'verify-msg loading show';
+  msg.textContent = '⏳ Memverifikasi ID Meter...';
+  
+  setTimeout(() => {
+    const names = ['Budi Santoso','Siti Aminah','Ahmad Wijaya','Dewi Lestari','Eko Prasetyo'];
+    const idx = parseInt(meter.slice(-1)) % names.length;
+    idVerified = true;
+    input.classList.add('verified');
+    msg.className = 'verify-msg success show';
+    msg.innerHTML = `✅ Pelanggan: <b>${names[idx]}</b>`;
+    btn.textContent = '✓';
+    document.getElementById('afterVerify').style.display = 'block';
+  }, 1000);
+}
+
+// ============ HELPERS ============
+function closeModal() {
+  document.getElementById('topupModal').classList.remove('active');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function copyRef() {
+  const code = document.getElementById('refCode').textContent;
+  navigator.clipboard.writeText(code).then(() => showToast('📋 Kode referral tersalin!'));
+}
+
+// ============ INIT ============
+initApp();
+</script>
+</body>
+</html>
